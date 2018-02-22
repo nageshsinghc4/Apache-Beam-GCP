@@ -1,0 +1,33 @@
+from __future__ import absolute_import
+from __future__ import print_function
+from beam_utils.sources import CsvFileSource
+import apache_beam as beam
+from apache_beam.io import fileio
+from apache_beam.io import ReadFromText
+from apache_beam.io import WriteToText
+from apache_beam.pipeline import PipelineOptions
+with beam.Pipeline(options=PipelineOptions()) as p:
+	class Split(beam.DoFn):
+		def process(self, element):
+			pro, val, usr= element.split(",")
+			return [{'pro': pro, 'val': val, 'usr': usr}]
+	class Collectusera(beam.DoFn):
+		def process(self, element):
+			result = [(element['pro'],element['val'])]
+			return result
+	class Collectuserb(beam.DoFn):
+		def process(self, element):
+			result = [(element['pro'],element['usr'])]
+			return result
+	inp1 = p | 'readFile1' >> beam.io.ReadFromText('gs://tegclorox/Input/FBasis11.csv')
+	spl1 = inp1 | 'plit' >> beam.ParDo(Split())
+	usr1 = spl1 | 'CallColelctuser' >> beam.ParDo(Collectusera())
+	usr11 = spl1	| 'pp' >> beam.ParDo(Collectuserb())
+	splout1 = (usr1, usr11) |'t' >> beam.CoGroupByKey()
+	inp2 = p | 'readFile2' >> beam.io.ReadFromText('gs://tegclorox/Input/FBasis12.csv')
+	spl2 = inp2 | 'Split12' >> beam.ParDo(Split())
+	usr2 = spl2 | 'q' >> beam.ParDo(Collectusera())
+	usr22 = spl2 | 'h' >> beam.ParDo(Collectuserb())
+	splout2 = (usr2, usr22) |'tre' >> beam.CoGroupByKey()
+	final = (splout1, splout2) | beam.CoGroupByKey()
+	output = final | 'op' >> beam.io.WriteToText('gs://tegclorox/Output/merge1234.csv')
