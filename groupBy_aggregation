@@ -1,0 +1,24 @@
+from __future__ import absolute_import
+from __future__ import print_function
+import apache_beam as beam
+from apache_beam.io import fileio
+from apache_beam.io import ReadFromText
+from apache_beam.io import WriteToText
+from apache_beam.pipeline import PipelineOptions
+with beam.Pipeline(options=PipelineOptions()) as p:
+	class Split(beam.DoFn):
+		def process(self, element):
+			Product, SerNo, user = element.split(",")
+			return [{ 'Product': Product, 'SerNo': float(SerNo),'user': user }]
+	class CollectSerNo(beam.DoFn):
+		def process(self, element):
+			result = [(element['Product'], element['SerNo'])]
+			return result
+	def get_players(descriptor):
+		return Player(name), int(points)
+	ip1 = p | 'readFile1' >> beam.io.ReadFromText('gs://tegclorox/Input/FBasis11.csv')
+	ip2 = ip1 |'Split' >> beam.ParDo(Split())
+	ser =  ip2 | 'CallCollectSer' >> beam.ParDo(CollectSerNo())
+	#gr_ser = ser | 'GroupingSer' >> beam.GroupByKey()
+	sum_gr=ser | "Counting users" >> beam.CombinePerKey(sum)
+	out = sum_gr |'output' >> beam.io.WriteToText('gs://tegclorox/Output/group12.csv')
