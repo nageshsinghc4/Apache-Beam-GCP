@@ -1,0 +1,27 @@
+from __future__ import absolute_import
+from __future__ import print_function
+import apache_beam as beam
+from apache_beam.io import ReadFromText
+from apache_beam.io import WriteToText
+from apache_beam.pipeline import PipelineOptions
+from apache_beam.io.gcp.internal.clients import bigquery
+with beam.Pipeline(options=PipelineOptions()) as p:
+	class Split(beam.DoFn):
+		def process(self, element):
+			Outlet, CatLib, ProdKey, Week, SalesComponent, DuetoValue, PrimaryCausalKey, CausalValue, ModelIteration, Published = element.split(",")
+			CatLibkey = CatLib +'.'+ ProdKey
+			return [{ 'Outlet': Outlet,
+			'CatLib' : CatLib,
+			'ProdKey' : ProdKey,
+			'Week' : Week,
+			'SalesComponent': SalesComponent,
+			'DuetoValue' : DuetoValue,
+			'PrimaryCausalKey' : PrimaryCausalKey,
+			'CausalValue' : CausalValue,
+			'ModelIteration' : ModelIteration,
+			'Published' : Published,
+			'CatLibkey' : CatLibkey
+			}]
+	ip1 = p | 'readFile1' >> beam.io.ReadFromText('gs://tegclorox/Final input/WeeklyDueto.csv')
+	ip2 = ip1 |'Split' >> beam.ParDo(Split())
+	ip3 = ip2 | 'abcd' >> beam.io.WriteToText('gs://tegclorox/Output/nagesh123')
